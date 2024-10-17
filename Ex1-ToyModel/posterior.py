@@ -59,7 +59,7 @@ class StackContext(torch.nn.Module):
 class ToyModelFlow_factorized_nflows(base.Distribution):
 
     def __init__(self, batch_theta, batch_x, embedding_net,
-                 z_score_theta=True, z_score_x=True):
+                 z_score_theta="independent", z_score_x="independent"):
 
         super().__init__()
 
@@ -226,7 +226,7 @@ class ToyModelFlow_naive_nflows(base.Distribution):
 
 def build_flow(batch_theta, batch_x, embedding_net=torch.nn.Identity(),
                naive=False, aggregate=True):
-    print("dans build flow", batch_theta.size())
+
     if naive:
         flow = ToyModelFlow_naive_nflows(batch_theta,
                                          batch_x,
