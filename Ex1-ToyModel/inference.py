@@ -62,9 +62,9 @@ if __name__ == "__main__":
         maxepochs = 0
         saverounds = False
     else:
-        nrd = 2
+        nrd = 2 #1 #NBR ROUND
         nsr = 10_000
-        maxepochs = None
+        maxepochs = 100 #None
         saverounds = True
 
     # setup the parameters for the example
@@ -119,11 +119,12 @@ if __name__ == "__main__":
     summary_net = IdentityToyModel()
 
     # choose a function which creates a neural network density estimator
+    # il s'agit d'une fonction !!!
     build_nn_posterior = partial(build_flow,
                                  embedding_net=summary_net,
                                  naive=args.naive,
                                  aggregate=args.aggregate)
-
+    #print(build_nn_posterior)
     # decide whether to run inference or viz the results from previous runs
     if not args.viz:
         # run inference procedure over the example
@@ -136,11 +137,12 @@ if __name__ == "__main__":
                                    save_rounds=saverounds,
                                    device='cpu',
                                    max_num_epochs=maxepochs)
-
     else:
+        print("avant get posterior")
         posterior = get_posterior(
             simulator, prior, build_nn_posterior,
             meta_parameters, round_=args.round
         )
-        fig, ax = display_posterior(posterior, prior)
+        fig, ax = display_posterior(posterior, prior, meta_parameters)
+        plt.savefig(f"posterior_plot_{nrd}_rounds_{nsr}_simperround_{args.nextra}_nextra")
         plt.show()
