@@ -2,6 +2,7 @@ from pathlib import Path
 
 import torch
 import sbi
+import pandas as pd
 from sbi import utils as sbi_utils
 from sbi.analysis import plot
 from sbi.inference.posteriors.direct_posterior import DirectPosterior
@@ -46,9 +47,12 @@ def display_posterior(posterior, prior, metaparameters):
     alpha=metaparameters["theta"][0]
     beta=metaparameters["theta"][1]
     n_samples = 100_000
+    n_extras = metaparameters["n_extra"] #nb of extra conditional obs
+    n_sim = metaparameters["n_sr"] #nbr of simulations per round
 
     samples = posterior.sample((n_samples,))#.unsqueeze(1) #, sample_with=False)
-    print("sample size", samples.size())
+    df = pd.DataFrame(data=samples, columns=["beta","alpha"])
+    df.to_csv(f"results/estimated_posterior_samples_{n_extras}_nextra_{n_sim}_sim.csv",index=False)
     xlim = [[prior.support.base_constraint.lower_bound[i],
              prior.support.base_constraint.upper_bound[i]]
             for i in range(2)]

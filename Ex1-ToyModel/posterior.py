@@ -109,7 +109,8 @@ class ToyModelFlow_factorized_nflows(base.Distribution):
         self.input_shape = batch_theta[0,:].size() #torch.zeros(2,).size() #meta_parameters["n_sr"]
         #print("input shape",self.input_shape)
         self.condition_shape = batch_x[0,:,:].size() #torch.zeros((1,1)).size()
-        self.net = self._flow_2.net #BIDOUILLE
+        # A DECOMMENTER POUR LANCER UNE VERSION SEQUENTIELLE
+        #self.net = self._flow_2.net
 
     def log_prob(self, inputs, condition):
         #print("logprob factorized flow")

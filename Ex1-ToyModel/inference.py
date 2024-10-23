@@ -51,6 +51,10 @@ if __name__ == "__main__":
                         help='How many extra observations to consider.')
     parser.add_argument('--ntrials', '-t', type=int, default=1,
                         help='How many trials to consider.')
+    parser.add_argument('--nrounds', '-nrd', type=int, default=1,
+                        help='How many training rounds to consider.')
+    parser.add_argument('--nsim', '-nsr', type=int, default=10000,
+                        help='How many data to simulate per round.')
     parser.add_argument('--dry', action='store_true')
 
     args = parser.parse_args()
@@ -62,8 +66,8 @@ if __name__ == "__main__":
         maxepochs = 0
         saverounds = False
     else:
-        nrd = 2 #1 #NBR ROUND
-        nsr = 10_000
+        nrd = args.nrounds #1 #NBR ROUND
+        nsr = args.nsim #NBR SIMU PER ROUND
         maxepochs = 100 #None
         saverounds = True
 
@@ -99,7 +103,7 @@ if __name__ == "__main__":
     meta_parameters["n_sf"] = 1
     # label to attach to the SNPE procedure and use for saving files
     meta_parameters["label"] = make_label(meta_parameters)
-
+    print(meta_parameters["label"])
     # set prior distribution for the parameters
     prior = prior_ToyModel(low=torch.tensor([0.0, 0.0]),
                            high=torch.tensor([1.0, 1.0]))
@@ -144,5 +148,5 @@ if __name__ == "__main__":
             meta_parameters, round_=args.round
         )
         fig, ax = display_posterior(posterior, prior, meta_parameters)
-        plt.savefig(f"posterior_plot_{nrd}_rounds_{nsr}_simperround_{args.nextra}_nextra")
+        plt.savefig(f"results/posterior_plot_{nrd}_rounds_{nsr}_simperround_{args.nextra}_nextra")
         plt.show()

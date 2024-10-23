@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
-
+import sbi.inference.trainers
 from sbi import inference as sbi_inference
 from sbi.inference.trainers.npe import SNPE_C
 
@@ -86,11 +86,6 @@ def run_inference(simulator, prior, build_nn_posterior, ground_truth,
             show_train_summary=True
         ) # TYPE : FACTORIZED FLOW
         print("append simu finie")
-        print("param neural net")
-        i=0
-        for param in nn_posterior.parameters():
-            i+=1
-        print(i)
         nn_posterior.zero_grad()
         #nn_posterior=ConditionalDensityEstimator(net=nn_posterior, input_shape=nn_posterior.input_shape, condition_shape=nn_posterior.condition_shape)
         posterior = inference.build_posterior(nn_posterior) #TYPE : DIRECT POSTERIOR
