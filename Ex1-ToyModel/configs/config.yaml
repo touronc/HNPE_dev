@@ -1,0 +1,14 @@
+alpha: 0.5
+beta: 0.5
+gamma: 1.0
+noise: 0.0
+summary: "Identity"
+viz: False
+naive: False
+aggregate: True
+round: 0
+nextra: 0
+ntrials: 1
+nrounds: 1
+nsim: 10000
+dry: False

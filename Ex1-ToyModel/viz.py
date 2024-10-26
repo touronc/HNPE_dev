@@ -75,3 +75,37 @@ def display_posterior(posterior, prior, metaparameters):
     axes[1][1].axvline(x=beta, linestyle='dotted', color="orange", lw=2)
 
     return fig, axes
+
+def display_posterior_mlxp(posterior, prior, metaparameters):
+
+    alpha=metaparameters["theta"][0]
+    beta=metaparameters["theta"][1]
+    n_samples = 100_000
+    n_extras = metaparameters["n_extra"] #nb of extra conditional obs
+    n_sim = metaparameters["n_sr"] #nbr of simulations per round
+
+    samples = posterior.sample((n_samples,))#.unsqueeze(1) #, sample_with=False)
+    df = pd.DataFrame(data=samples, columns=["beta","alpha"])
+   # df.to_csv(f"results/estimated_posterior_samples_{n_extras}_nextra_{n_sim}_sim.csv",index=False)
+    xlim = [[prior.support.base_constraint.lower_bound[i],
+             prior.support.base_constraint.upper_bound[i]]
+            for i in range(2)]
+    fig, axes = plot.pairplot(samples, limits=xlim)
+
+    axes[0][0].set_title(r"$p(\alpha|x_0$)")
+    axes[0][0].set_xlabel(r"$\alpha$")
+    axes[0][0].axvline(x=alpha, linestyle='dotted', color="orange", lw=2)
+
+
+    axes[0][1].set_title(r"$p(\alpha,\beta|x_0$)")
+    axes[0][1].set_xlabel(r"$\alpha$")
+    axes[0][1].set_ylabel(r"$\beta$")
+    axes[0][1].scatter(x=alpha, y=beta, color="orange")
+    axes[0][1].axvline(x=alpha, linestyle='dotted', color="orange")
+    axes[0][1].axhline(y=beta, linestyle='dotted', color="orange")
+
+    axes[1][1].set_title(r"$p(\beta|x_0$)")
+    axes[1][1].set_xlabel(r"$\beta$")
+    axes[1][1].axvline(x=beta, linestyle='dotted', color="orange", lw=2)
+
+    return df, fig, axes
