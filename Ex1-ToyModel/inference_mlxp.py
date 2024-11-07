@@ -3,12 +3,12 @@ from functools import partial
 import torch
 import mlxp
 import matplotlib.pyplot as plt
-
+import pandas as pd
 from hnpe.misc import make_label
 from hnpe.inference import run_inference
 
 from viz import get_posterior
-from viz import display_posterior, display_posterior_mlxp
+from viz import display_posterior_mlxp, display_posterior_from_file
 from posterior import build_flow, IdentityToyModel
 from simulator import simulator_ToyModel, prior_ToyModel, get_ground_truth
 
@@ -38,42 +38,10 @@ def load_pickle(path):
 
 @mlxp.launch(config_path='./configs/')
 def main(ctx: mlxp.Context):
+    #torch.manual_seed(42)
 
     cfg = ctx.config
     logger = ctx.logger
-    # import argparse
-    # parser = argparse.ArgumentParser(
-    #     description='Run inference on the Toy Model'
-    # )
-    # parser.add_argument('--alpha', '-a', type=float, default=0.5,
-    #                     help='Ground truth value for alpha.')
-    # parser.add_argument('--beta', '-b', type=float, default=0.5,
-    #                     help='Ground truth value for beta.')
-    # parser.add_argument('--gamma', '-y', type=float, default=1.0,
-    #                     help='Ground truth value for gamma.')
-    # parser.add_argument('--noise', type=float, default=0.0,
-    #                     help='Standard deviation of the Gaussian noise.')
-    # parser.add_argument('--summary', '-s', type=str, default='Identity',
-    #                     help='Architecture used to compute summary features.')
-    # parser.add_argument('--viz', action='store_true',
-    #                     help='Show results from previous run.')
-    # parser.add_argument('--naive', action='store_true',
-    #                     help='Use naive posterior estimation.')
-    # parser.add_argument('--aggregate', action='store_true',
-    #                     help='Aggregate the extra observations.')
-    # parser.add_argument('--round', '-r', type=int, default=0,
-    #                     help='Show results from previous inference run.')
-    # parser.add_argument('--nextra', '-n', type=int, default=0,
-    #                     help='How many extra observations to consider.')
-    # parser.add_argument('--ntrials', '-t', type=int, default=1,
-    #                     help='How many trials to consider.')
-    # parser.add_argument('--nrounds', '-nrd', type=int, default=1,
-    #                     help='How many training rounds to consider.')
-    # parser.add_argument('--nsim', '-nsr', type=int, default=10000,
-    #                     help='How many data to simulate per round.')
-    # parser.add_argument('--dry', action='store_true')
-
-    # args = parser.parse_args()
 
     if cfg.dry:
         # the dryrun serves just to check if all is well
@@ -84,11 +52,13 @@ def main(ctx: mlxp.Context):
     else:
         nrd = cfg.nrounds #1 #NBR ROUND
         nsr = cfg.nsim #NBR SIMU PER ROUND
-        maxepochs = 100 #None
+        maxepochs = 500 #None
         saverounds = True
 
     # setup the parameters for the example
     meta_parameters = {}
+    # which kind of flow to build
+    meta_parameters["naive"] = cfg.naive
     # how many extra observations to consider
     meta_parameters["n_extra"] = cfg.nextra
     # how many trials for each observation
@@ -119,6 +89,7 @@ def main(ctx: mlxp.Context):
     meta_parameters["n_sf"] = 1
     # label to attach to the SNPE procedure and use for saving files
     meta_parameters["label"] = make_label(meta_parameters)
+    
     # set prior distribution for the parameters
     prior = prior_ToyModel(low=torch.tensor([0.0, 0.0]),
                            high=torch.tensor([1.0, 1.0]))
@@ -133,7 +104,9 @@ def main(ctx: mlxp.Context):
 
     # choose the ground truth observation to consider in the inference
     ground_truth = get_ground_truth(meta_parameters, p_alpha=prior)
-
+    print(ground_truth["observation"].squeeze())
+    df = pd.DataFrame(ground_truth["observation"].squeeze(), columns=["xobs"])
+    df.to_csv(meta_parameters["label"].split("/")[1]+f"_agg_{cfg.aggregate}.csv", index=False)
     # choose how to get the summary features
     summary_net = IdentityToyModel()
 
@@ -164,12 +137,14 @@ def main(ctx: mlxp.Context):
         )
         df, fig, ax = display_posterior_mlxp(posterior, prior, meta_parameters)
         # store the posterior plot in the corresponding logs
-        logger.log_artifacts(fig, artifact_name=f"posterior_plot_{nrd}_rounds_{nsr}_simperround_{cfg.nextra}_nextra.png",
+        logger.log_artifacts(fig, artifact_name=f"posterior_plot_naive_{cfg.naive}_{nrd}_rounds_{nsr}_simperround_{cfg.nextra}_nextra.png",
                             artifact_type='image')
         logger.register_artifact_type("pickle", save_pickle, load_pickle)
-        logger.log_artifacts(df, f"estimated_posterior_samples_{cfg.nextra}_nextra_{cfg.nsim}_sim.pkl", "pickle")
+        logger.log_artifacts(df, f"estimated_posterior_samples_naive_{cfg.naive}_{cfg.nextra}_nextra_{cfg.nsim}_sim.pkl", "pickle")
         #ess=logger.load_artifacts(f"estimated_posterior_samples_{cfg.nextra}_nextra_{cfg.nsim}_sim.pkl", "pickle")
 
 if __name__ == "__main__":
     main()
+    #fig,ax=display_posterior_from_file("results/old/estimated_posterior_samples_10_nextra_10000_sim.csv")
+
 

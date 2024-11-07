@@ -8,6 +8,7 @@ from hnpe.inference import run_inference
 
 from viz import get_posterior
 from viz import display_posterior
+from viz import display_posterior_from_file
 from posterior import build_flow, IdentityToyModel
 from simulator import simulator_ToyModel, prior_ToyModel, get_ground_truth
 
@@ -68,11 +69,13 @@ if __name__ == "__main__":
     else:
         nrd = args.nrounds #1 #NBR ROUND
         nsr = args.nsim #NBR SIMU PER ROUND
-        maxepochs = 100 #None
+        maxepochs = 100 #None #NBR OF EPOCHS
         saverounds = True
 
     # setup the parameters for the example
     meta_parameters = {}
+    # which kind of flow to build
+    meta_parameters["naive"] = args.naive
     # how many extra observations to consider
     meta_parameters["n_extra"] = args.nextra
     # how many trials for each observation
@@ -148,5 +151,6 @@ if __name__ == "__main__":
             meta_parameters, round_=args.round
         )
         fig, ax = display_posterior(posterior, prior, meta_parameters)
-        plt.savefig(f"results/posterior_plot_{nrd}_rounds_{nsr}_simperround_{args.nextra}_nextra")
+        plt.savefig(f"results/posterior_plot_naive_{args.naive}_{nrd}_rounds_{nsr}_simperround_{args.nextra}_nextra")
         plt.show()
+        #fig,ax=display_posterior_from_file("results/estimated_posterior_samples_10_nextra_10000_sim.csv")

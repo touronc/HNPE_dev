@@ -5,7 +5,7 @@ noise: 0.0
 summary: "Identity"
 viz: False
 naive: False
-aggregate: True
+aggregate: False
 round: 0
 nextra: 0
 ntrials: 1
