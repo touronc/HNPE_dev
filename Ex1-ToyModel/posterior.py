@@ -76,6 +76,7 @@ class ToyModelFlow_factorized_nflows(base.Distribution):
         # create a new net that embeds all n+1 observations and then aggregates
         # n of them via a sum operation (parameter phi_3)
         # computes the mean of the extra obs and stack it next to x
+        print("batchx", batch_x.size())
         embedding_net_1 = torch.nn.Sequential(
             embedding_net, AggregateInstances(aggregate=(batch_x.shape[2] > 1)) 
         )

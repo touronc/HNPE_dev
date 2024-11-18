@@ -2,7 +2,7 @@
 import torch
 
 # Imports for the SBI package
-from sbi.utils.get_nn_models import build_maf
+from sbi.neural_nets.net_builders.flow import build_maf
 from pyknos.nflows.distributions import base
 
 

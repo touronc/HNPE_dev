@@ -28,7 +28,7 @@ def c2st_score(df_true_theta_file, df_estimated_theta_file):
 print("____ Computation running ____")
 
 
-c2st_score("true_samples_alpha_0.3_beta_0.5_nextra_10.csv","estimated_posterior_samples_naive_False_10_nextra_10000_sim.csv")
+c2st_score("true_samples_alpha_0.5_beta_0.5_nextra_100.csv","estimated_posterior_samples_naive_False_100_nextra_10000_sim.csv")
 #c2st_score("true_posterior_samples_0.001.csv","estimated_posterior_samples_naive_True_0_nextra_10000_sim_mlxp.csv")
 
 

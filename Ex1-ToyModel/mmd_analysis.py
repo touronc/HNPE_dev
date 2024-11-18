@@ -13,6 +13,6 @@ def mmd_score(true_path, estimated_path):
     return(acc)
 
 if __name__ == "__main__":
-    true_path="results/10_nextra/true_samples_alpha_0.3_beta_0.5_nextra_10.csv"
-    estimated_path="results/10_nextra/estimated_posterior_samples_naive_False_aggr_False_10_nextra_10000_sim_alpha_0.3_beta_0.5.csv"
+    true_path="results/true_samples_alpha_0.5_beta_0.5_nextra_10.csv"
+    estimated_path="results/estimated_posterior_samples_naive_True_10_nextra_10000_sim.csv"
     print(mmd_score(true_path, estimated_path))

@@ -54,12 +54,12 @@ if __name__ == "__main__":
                         help='Aggregate the extra observations in posterior.')
 
     args = parser.parse_args()
-
+    
     if args.dry:
         maxepochs = 0
         nsr = 10
     else:
-        maxepochs = None
+        maxepochs = 100 #None
         nsr = 50_000
 
     # setup the parameters for the example
@@ -113,14 +113,14 @@ if __name__ == "__main__":
                                     ('mu', 50.0, 500.0),
                                     ('sigma', 100.0, 5000.0),
                                     ('gain', -20.0, +20.0)])
-
+    print("after prior")
     # choose how to setup the simulator
     simulator = partial(simulator_JRNMM,
                         input_parameters=input_parameters,
                         t_recording=meta_parameters["t_recording"],
                         n_extra=meta_parameters["n_extra"],
                         p_gain=prior)
-
+    print("after simulatro")
     # choose how to get the summary features
     summary_extractor = summary_JRNMM(
         n_extra=meta_parameters["n_extra"],
