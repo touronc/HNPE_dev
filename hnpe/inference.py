@@ -85,7 +85,6 @@ def run_inference(simulator, prior, build_nn_posterior, ground_truth,
             stop_after_epochs=stop_after_epochs,
             show_train_summary=True
         ) # TYPE : FACTORIZED FLOW
-        print("append simu finie")
         nn_posterior.zero_grad()
         #nn_posterior=ConditionalDensityEstimator(net=nn_posterior, input_shape=nn_posterior.input_shape, condition_shape=nn_posterior.condition_shape)
         posterior = inference.build_posterior(nn_posterior) #TYPE : DIRECT POSTERIOR
