@@ -56,13 +56,13 @@ def simulator_ToyModel(theta, n_extra=0, n_trials=1, p_alpha=None, gamma=1.0,
     x = []
     for thetai in theta:
         thetai = thetai.detach().clone()
-        alphai = thetai[0]
-        betai = thetai[1]
-        xi = [list(alphai * (betai**gamma) + sigma*torch.randn(n_trials))]
+        alphai = thetai[0] # alpha is the first parameter
+        betai = thetai[1] # beta is the second parameter
+        xi = [list(alphai * (betai**gamma) + sigma*torch.randn(n_trials))] # returns x_0=alpha*beta + eps where eps~N(0,sigma**2), singleton if ntrials=1
         if n_extra > 0:
-            alphaj_list = p_alpha.condition(betai).sample((n_extra,))
+            alphaj_list = p_alpha.condition(betai).sample((n_extra,)) # list alpha_j from p(alpha|beta_i) for j=1..nextras
             betaj = betai
-            xi = xi + [list(alphaj * (betaj**gamma) + sigma*torch.randn(
+            xi = xi + [list(alphaj * (betaj**gamma) + sigma*torch.randn( # list x_0, x_1, ..x_nextras
                 n_trials)) for alphaj in alphaj_list]
         x.append(xi)
 

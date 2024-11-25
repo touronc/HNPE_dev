@@ -85,15 +85,15 @@ def display_posterior(posterior, prior, metaparameters):
 
     return fig, axes
 
-def display_posterior_mlxp(posterior, prior, metaparameters):
+def display_posterior_mlxp(posterior, prior, metaparameters, num_samples):
 
     alpha=metaparameters["theta"][0]
     beta=metaparameters["theta"][1]
-    n_samples = 100_000
+    #num_samples = 100_000
     n_extras = metaparameters["n_extra"] #nb of extra conditional obs
     n_sim = metaparameters["n_sr"] #nbr of simulations per round
 
-    samples = posterior.sample((n_samples,))#.unsqueeze(1) #, sample_with=False)
+    samples = posterior.sample((num_samples,))#.unsqueeze(1) #, sample_with=False)
     #df = pd.DataFrame(data=samples, columns=["beta","alpha"])
     df = pd.DataFrame(data=samples, columns=["alpha","beta"]) ### ATTENTION à l'ordre des paramètres dans la df
 
@@ -111,8 +111,8 @@ def display_posterior_mlxp(posterior, prior, metaparameters):
     axes[0][0].axvline(x=alpha, linestyle='dotted', color="orange", lw=2)
 
     axes[0][1].set_title(r"$p(\alpha,\beta|$"+condition_title+")")
-    axes[0][1].set_xlabel(r"$\alpha$")
-    axes[0][1].set_ylabel(r"$\beta$")
+    axes[0][1].set_ylabel(r"$\alpha$")
+    axes[0][1].set_xlabel(r"$\beta$")
     axes[0][1].scatter(y=alpha, x=beta, color="orange")
     axes[0][1].axvline(x=beta, linestyle='dotted', color="orange")
     axes[0][1].axhline(y=alpha, linestyle='dotted', color="orange")

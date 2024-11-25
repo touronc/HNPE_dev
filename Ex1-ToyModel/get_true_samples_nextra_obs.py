@@ -14,7 +14,7 @@ numpyro.set_host_device_count(4)
 rng_key = random.PRNGKey(1)
 
 
-def model(x_obs=None, n_extra=0, eps=0.001):
+def model(x_obs=None, n_extra=0, eps=0.01):
     """
     A probabilistic model that generates observations based on a set of parameters.
 
@@ -56,7 +56,7 @@ def model(x_obs=None, n_extra=0, eps=0.001):
 
 def get_posterior_samples(n_extra_list,true_theta,true_nextra,nb_samples=100000):
     samples_mcmc = {}
-
+    
     # loop over how many extra observations to consider
     for n_extra in n_extra_list:
         rng_key = random.PRNGKey(1)
@@ -72,11 +72,11 @@ def get_posterior_samples(n_extra_list,true_theta,true_nextra,nb_samples=100000)
             condition(model, {"alpha": alpha_star, "beta": beta_star}),
             num_samples=1)
         rng_key, subkey = random.split(rng_key)
-        data = predictive(subkey, n_extra=n_extra)
-        x_obs = data['obs']
-        print("x_obs",jnp.shape(x_obs))
+        #data = predictive(subkey, n_extra=n_extra)
+        # x_obs = data['obs']
+        # print("x_obs",jnp.shape(x_obs))
         x_obs = jnp.expand_dims(jnp.array(true_nextra),0)
-        print("x_obs",jnp.shape(x_obs))
+        #print("x_obs",jnp.shape(x_obs))
 
         # print("x_obs",jnp.shape(x_obs))
 
@@ -103,8 +103,8 @@ def get_posterior_samples(n_extra_list,true_theta,true_nextra,nb_samples=100000)
         samples_mcmc[n_extra] = np.array(jnp.stack([mcmc_alpha, mcmc_beta]).T)
         #print(samples_mcmc)
         df = pd.DataFrame(samples_mcmc[n_extra],columns=["alpha","beta"])
-        df.to_csv(f"true_samples_alpha_{true_theta[0]}_beta_{true_theta[1]}_nextra_{n_extra}.csv",index=False)
-    return samples_mcmc
+        #df.to_csv(f"true_samples_alpha_{true_theta[0]}_beta_{true_theta[1]}_nextra_{n_extra}.csv",index=False)
+    return df, samples_mcmc
 
 def plot_true_posterior(true_theta,samples_mcmc):
     # when we want to plot several joint posteriors at the same time
@@ -147,34 +147,34 @@ def plot_true_posterior(true_theta,samples_mcmc):
         ax[1][1].set_xlabel(r"$\beta$")
         ax[1][1].axvline(x=true_theta[1], linestyle='dotted', color="orange", lw=2)
 
-        fig.savefig(fname=f'true_posterior_samples_alpha_{true_theta[0]}_beta_{true_theta[1]}_nextra_{n_extra}.pdf', format='pdf')
-
+        #fig.savefig(fname=f'true_posterior_samples_alpha_{true_theta[0]}_beta_{true_theta[1]}_nextra_{n_extra}.pdf', format='pdf')
+        return fig, ax
     #fig.show()
 
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(
-        description='Sample from the true posterior on the Toy Model with n_extra observations'
-    )
-    parser.add_argument('--alpha', '-a', type=float, default=0.5,
-                        help='Ground truth value for alpha.')
-    parser.add_argument('--beta', '-b', type=float, default=0.5,
-                        help='Ground truth value for beta.')
-    parser.add_argument('--n_extra', '-n',  nargs='+', type=int, default=[0, 5, 10],
-                        help='How many extra observations to consider.')
-    parser.add_argument('--nb_samples', '-nsp', type=int, default=100000,
-                        help='How many parameters to sample.')
-    parser.add_argument('--viz', action='store_true',
-                        help='Only show a pairplot of posterior samples from a csv file.')
-    args = parser.parse_args()
-    file = "ToyModel_naive_False_ntrials_01_nextra_100_alpha_0.50_beta_0.50_gamma_1.00_noise_0.00_agg_False.csv"
-    rng_key = random.PRNGKey(1)
-    true_nextra = pd.read_csv(file)["xobs"]
-    n_extra_list = args.n_extra
+# if __name__ == "__main__":
+#     import argparse
+#     parser = argparse.ArgumentParser(
+#         description='Sample from the true posterior on the Toy Model with n_extra observations'
+#     )
+#     parser.add_argument('--alpha', '-a', type=float, default=0.5,
+#                         help='Ground truth value for alpha.')
+#     parser.add_argument('--beta', '-b', type=float, default=0.5,
+#                         help='Ground truth value for beta.')
+#     parser.add_argument('--n_extra', '-n',  nargs='+', type=int, default=[0, 5, 10],
+#                         help='How many extra observations to consider.')
+#     parser.add_argument('--nb_samples', '-nsp', type=int, default=100000,
+#                         help='How many parameters to sample.')
+#     parser.add_argument('--viz', action='store_true',
+#                         help='Only show a pairplot of posterior samples from a csv file.')
+#     args = parser.parse_args()
+#     file = "ToyModel_naive_False_ntrials_01_nextra_10_alpha_0.50_beta_0.50_gamma_1.00_noise_0.01_agg_False.csv"
+#     rng_key = random.PRNGKey(1)
+#     true_nextra = pd.read_csv(file)["xobs"]
+#     n_extra_list = args.n_extra
     
-    true_theta=[args.alpha,args.beta]
-    print(true_theta)
-    samples = get_posterior_samples(n_extra_list,true_theta,true_nextra,nb_samples=args.nb_samples)
-    plot_true_posterior(true_theta,samples)
+#     true_theta=[args.alpha,args.beta]
+#     print(true_theta)
+#     samples = get_posterior_samples(n_extra_list,true_theta,true_nextra,nb_samples=args.nb_samples)
+#     plot_true_posterior(true_theta,samples)
     
 

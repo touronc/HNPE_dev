@@ -1,4 +1,5 @@
 from functools import partial
+from jax import random
 
 import torch
 import mlxp
@@ -11,6 +12,10 @@ from viz import get_posterior
 from viz import display_posterior_mlxp, display_posterior_from_file
 from posterior import build_flow, IdentityToyModel
 from simulator import simulator_ToyModel, prior_ToyModel, get_ground_truth
+from get_true_posterior_samples import sample_true_posterior, pairplot_samples
+from c2st_analysis import c2st_score_df
+from get_true_samples_nextra_obs import get_posterior_samples, plot_true_posterior
+
 
 """
 In this example, we consider the ToyModel setting in which the simulator has
@@ -24,6 +29,9 @@ parameter beta but with different values for alpha. Our goal then is to use
 this extra information to obtain the posterior distribution of
 p(alpha, beta | x0, x1, ..., xN)
 """
+import numpyro
+
+numpyro.set_host_device_count(4)
 
 def save_pickle(obj, path):
     import pickle
@@ -54,6 +62,7 @@ def main(ctx: mlxp.Context):
         nsr = cfg.nsim #NBR SIMU PER ROUND
         maxepochs = 500 #None
         saverounds = True
+        num_samples = 10000
 
     # setup the parameters for the example
     meta_parameters = {}
@@ -104,9 +113,11 @@ def main(ctx: mlxp.Context):
 
     # choose the ground truth observation to consider in the inference
     ground_truth = get_ground_truth(meta_parameters, p_alpha=prior)
-    print(ground_truth["observation"].squeeze())
-    df = pd.DataFrame(ground_truth["observation"].squeeze(), columns=["xobs"])
-    df.to_csv(meta_parameters["label"].split("/")[1]+f"_agg_{cfg.aggregate}.csv", index=False)
+    # if meta_parameters["n_extra"]>1:
+    #     print(ground_truth["observation"].squeeze())
+    #     df = pd.DataFrame(ground_truth["observation"].squeeze(), columns=["xobs"])
+    #     df.to_csv(meta_parameters["label"].split("/")[1]+f"_agg_{cfg.aggregate}.csv", index=False)
+    
     # choose how to get the summary features
     summary_net = IdentityToyModel()
 
@@ -116,35 +127,46 @@ def main(ctx: mlxp.Context):
                                  embedding_net=summary_net,
                                  naive=cfg.naive,
                                  aggregate=cfg.aggregate)
-    #print(build_nn_posterior)
     # decide whether to run inference or viz the results from previous runs
-    if not cfg.viz:
+    #if not cfg.viz:
         # run inference procedure over the example
-        posteriors = run_inference(simulator=simulator,
-                                   prior=prior,
-                                   build_nn_posterior=build_nn_posterior,
-                                   ground_truth=ground_truth,
-                                   meta_parameters=meta_parameters,
-                                   summary_extractor=summary_net,
-                                   save_rounds=saverounds,
-                                   device='cpu',
-                                   max_num_epochs=maxepochs)
-    else:
-        print("avant get posterior")
-        posterior = get_posterior(
-            simulator, prior, build_nn_posterior,
-            meta_parameters, round_=cfg.round
-        )
-        df, fig, ax = display_posterior_mlxp(posterior, prior, meta_parameters)
-        # store the posterior plot in the corresponding logs
-        logger.log_artifacts(fig, artifact_name=f"posterior_plot_naive_{cfg.naive}_{nrd}_rounds_{nsr}_simperround_{cfg.nextra}_nextra.png",
-                            artifact_type='image')
-        logger.register_artifact_type("pickle", save_pickle, load_pickle)
-        logger.log_artifacts(df, f"estimated_posterior_samples_naive_{cfg.naive}_{cfg.nextra}_nextra_{cfg.nsim}_sim.pkl", "pickle")
-        #ess=logger.load_artifacts(f"estimated_posterior_samples_{cfg.nextra}_nextra_{cfg.nsim}_sim.pkl", "pickle")
+    run_inference(simulator=simulator,
+                            prior=prior,
+                            build_nn_posterior=build_nn_posterior,
+                            ground_truth=ground_truth,
+                            meta_parameters=meta_parameters,
+                            summary_extractor=summary_net,
+                            save_rounds=saverounds,
+                            device='cpu',
+                            max_num_epochs=maxepochs)
+    #print("avant get posterior")
+    posterior = get_posterior(
+        simulator, prior, build_nn_posterior,
+        meta_parameters, round_=cfg.round
+    )
+
+    # sample from the estimated posterior and plot the distributions
+    df, fig, ax = display_posterior_mlxp(posterior, prior, meta_parameters, num_samples)
+    logger.log_artifacts(fig, artifact_name=f"posterior_plot_naive_{cfg.naive}_{nrd}_rounds_{nsr}_simperround_{cfg.nextra}_nextra.png",
+                        artifact_type='image')
+    logger.register_artifact_type("pickle", save_pickle, load_pickle)
+    logger.log_artifacts(df, f"estimated_posterior_samples_naive_{cfg.naive}_{cfg.nextra}_nextra_{cfg.nsim}_sim.pkl", "pickle")
+
+    # simulate true posterior samples and store them
+    true_nextra = ground_truth["observation"].squeeze()
+    df_true_samples, true_samples = get_posterior_samples([meta_parameters["n_extra"]],meta_parameters["theta"],true_nextra,num_samples)
+    logger.log_artifacts(df_true_samples, f"true_posterior_samples_{cfg.noise}_scale_{cfg.nextra}_nextra.pkl", "pickle")
+    
+    # plot the true posterior
+    fig1, ax1 = plot_true_posterior(meta_parameters["theta"],true_samples)
+    logger.log_artifacts(fig1, artifact_name=f"true_plot_scale_{cfg.noise}_{cfg.nextra}_nextra.png",
+                        artifact_type='image')
+   
+    # compute the c2st score between the true and estimated samples
+    print("C2ST computation running :")
+    acc = c2st_score_df(df_true_samples, df)
+    logger.log_metrics({"accuracy":acc.item()}, log_name="c2st")
 
 if __name__ == "__main__":
     main()
-    #fig,ax=display_posterior_from_file("results/old/estimated_posterior_samples_10_nextra_10000_sim.csv")
-
-
+    

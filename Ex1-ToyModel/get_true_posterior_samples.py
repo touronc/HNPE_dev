@@ -18,8 +18,9 @@ import torch
 import numpy as np
 from sbi.analysis import plot
 
+numpyro.set_host_device_count(4)
 
-def model_hnpe(x_obs=None, solver='analytic'):
+def model_hnpe(x_obs=None, solver='analytic', scale=0.01):
     """
     define the simulator for the toy example of HNPE
     x = alpha*beta
@@ -71,7 +72,7 @@ def generate_posterior_samples(
     return samples
 
 
-def sample_true_posterior(rng_key, theta_obs_list, num_samples):
+def sample_true_posterior(rng_key, theta_obs_list, num_samples, scale):
     """sample from the true posterior with MCMC 
     and store the samples in a csv file
     """
@@ -146,37 +147,37 @@ def pairplot_samples(theta_obs, df_samples, resample=False):
     ax[1][1].set_xlabel(r"$\beta$")
     ax[1][1].axvline(x=theta_obs[0], linestyle='dotted', color="orange", lw=2)
 
-    fig.savefig(fname=f'true_posterior_samples_alpha_{theta_obs[1]}_beta_{theta_obs[0]}_scale_{scale}.pdf', format='pdf')
-    plt.show()
+    #fig.savefig(fname=f'true_posterior_samples_alpha_{theta_obs[1]}_beta_{theta_obs[0]}_scale_{scale}.pdf', format='pdf')
+    #plt.show()
+    return fig, ax
 
 
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(
-        description='Sample from the true posterior on the Toy Model'
-    )
-    parser.add_argument('--alpha', '-a', type=float, default=0.5,
-                        help='Ground truth value for alpha.')
-    parser.add_argument('--beta', '-b', type=float, default=0.5,
-                        help='Ground truth value for beta.')
-    parser.add_argument('--nsample', '-nsp', type=int, default=100000,
-                        help='How many parameters to sample.')
-    parser.add_argument('--viz', action='store_true',
-                        help='Only show a pairplot of posterior samples from a csv file.')
-    args = parser.parse_args()
+# if __name__ == "__main__":
+#     import argparse
+#     parser = argparse.ArgumentParser(
+#         description='Sample from the true posterior on the Toy Model'
+#     )
+#     parser.add_argument('--alpha', '-a', type=float, default=0.5,
+#                         help='Ground truth value for alpha.')
+#     parser.add_argument('--beta', '-b', type=float, default=0.5,
+#                         help='Ground truth value for beta.')
+#     parser.add_argument('--nsample', '-nsp', type=int, default=100000,
+#                         help='How many parameters to sample.')
+#     parser.add_argument('--viz', action='store_true',
+#                         help='Only show a pairplot of posterior samples from a csv file.')
+#     args = parser.parse_args()
     
-    rng_key = random.PRNGKey(1)
+#     rng_key = random.PRNGKey(1)
+#     theta_obs=torch.tensor([args.beta,args.alpha])
+#     theta_obs_list=[theta_obs]
+#     num_samples=args.nsample
+#     scale=0.01
+#     if not args.viz :
+#         df_samples = sample_true_posterior(rng_key, theta_obs_list, num_samples)
+#         pairplot_samples(theta_obs=theta_obs, df_samples=df_samples, resample=True)
 
-    theta_obs=torch.tensor([args.beta,args.alpha])
-    theta_obs_list=[theta_obs]
-    num_samples=args.nsample
-    scale=0.001
-    if not args.viz :
-        df_samples = sample_true_posterior(rng_key, theta_obs_list, num_samples)
-        pairplot_samples(theta_obs=theta_obs, df_samples=df_samples, resample=True)
-
-    else :
-        pairplot_samples(theta_obs=theta_obs, df_samples=None)
+#     else :
+#         pairplot_samples(theta_obs=theta_obs, df_samples=None)
 
 
     
