@@ -129,7 +129,7 @@ def main(ctx: mlxp.Context):
                                  aggregate=cfg.aggregate)
     # decide whether to run inference or viz the results from previous runs
     #if not cfg.viz:
-        # run inference procedure over the example
+    # run inference procedure over the example
     run_inference(simulator=simulator,
                             prior=prior,
                             build_nn_posterior=build_nn_posterior,
@@ -147,7 +147,7 @@ def main(ctx: mlxp.Context):
 
     # sample from the estimated posterior and plot the distributions
     estim_samples, df, fig, ax = display_posterior_mlxp(posterior, prior, meta_parameters, num_samples)
-    print(estim_samples.size())
+    
     logger.log_artifacts(fig, artifact_name=f"posterior_plot_naive_{cfg.naive}_{nrd}_rounds_{nsr}_simperround_{cfg.nextra}_nextra.png",
                         artifact_type='image')
     logger.register_artifact_type("pickle", save_pickle, load_pickle)
@@ -155,28 +155,25 @@ def main(ctx: mlxp.Context):
 
     # simulate true posterior samples and store them
     true_nextra = ground_truth["observation"].squeeze()
-    df_true_samples, true_samples = get_posterior_samples([meta_parameters["n_extra"]],meta_parameters["theta"],true_nextra,num_samples)
+    df_true_samples, true_samples = get_posterior_samples(meta_parameters["n_extra"],meta_parameters["theta"],true_nextra,num_samples)
     logger.log_artifacts(df_true_samples, f"true_posterior_samples_{cfg.noise}_scale_{cfg.nextra}_nextra.pkl", "pickle")
     
     # plot the true posterior
-    fig1, ax1 = plot_true_posterior(meta_parameters["theta"],true_samples)
+    fig1, ax1 = plot_true_posterior(meta_parameters["n_extra"],meta_parameters["theta"],true_samples)
     logger.log_artifacts(fig1, artifact_name=f"true_plot_scale_{cfg.noise}_{cfg.nextra}_nextra.png",
                         artifact_type='image')
    
     # compute the c2st score between the true and estimated samples
-    # print("C2ST computation running :")
-    # acc = c2st_score_df(df_true_samples, df)
-    # logger.log_metrics({"accuracy":acc.item()}, log_name="c2st")
+    print("C2ST computation running :")
+    acc = c2st_score_df(df_true_samples, df)
+    logger.log_metrics({"accuracy":acc.item()}, log_name="c2st")
     print("Variance computation :")
-    true_samples = torch.cat((torch.tensor(df_true_samples["alpha"]).unsqueeze(1),torch.tensor(df_true_samples["beta"]).unsqueeze(1)),dim=1)
-    true_var = torch.var(true_samples, dim=0)
+    true_var = torch.var(torch.tensor(true_samples), dim=0)
     logger.log_metrics({"true_variance_alpha":true_var[0].item()}, log_name="c2st")
     logger.log_metrics({"true_variance_beta":true_var[1].item()}, log_name="c2st")
     estimated_var = torch.var(estim_samples, dim=1)
     logger.log_metrics({"estimated_variance_alpha":estimated_var[0].item()}, log_name="c2st")
     logger.log_metrics({"estimated_variance_beta":estimated_var[1].item()}, log_name="c2st")
-
-
 
 
 if __name__ == "__main__":
