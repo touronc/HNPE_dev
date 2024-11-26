@@ -12,6 +12,7 @@ from sbi.analysis import plot
 
 numpyro.set_host_device_count(4)
 rng_key = random.PRNGKey(1)
+np.random.seed(42)
 
 
 def model(x_obs=None, n_extra=0, eps=0.01):
@@ -61,7 +62,6 @@ def get_posterior_samples(n_extra_list,true_theta,true_nextra,nb_samples=100000)
     for n_extra in n_extra_list:
         rng_key = random.PRNGKey(1)
         # fix the parameters of the ground truth
-        np.random.seed(42)
         alpha_star = jnp.concatenate(
             [jnp.array([true_theta[0]]),
             jnp.array(np.random.rand(n_extra))])
