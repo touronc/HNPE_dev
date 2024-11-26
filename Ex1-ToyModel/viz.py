@@ -121,7 +121,7 @@ def display_posterior_mlxp(posterior, prior, metaparameters, num_samples):
     axes[1][1].set_xlabel(r"$\beta$")
     axes[1][1].axvline(x=beta, linestyle='dotted', color="orange", lw=2)
 
-    return df, fig, axes
+    return samples, df, fig, axes
 
 def display_posterior_from_file(path):
     """

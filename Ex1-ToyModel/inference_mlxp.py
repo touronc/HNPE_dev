@@ -146,7 +146,8 @@ def main(ctx: mlxp.Context):
     )
 
     # sample from the estimated posterior and plot the distributions
-    df, fig, ax = display_posterior_mlxp(posterior, prior, meta_parameters, num_samples)
+    estim_samples, df, fig, ax = display_posterior_mlxp(posterior, prior, meta_parameters, num_samples)
+    print(estim_samples.size())
     logger.log_artifacts(fig, artifact_name=f"posterior_plot_naive_{cfg.naive}_{nrd}_rounds_{nsr}_simperround_{cfg.nextra}_nextra.png",
                         artifact_type='image')
     logger.register_artifact_type("pickle", save_pickle, load_pickle)
@@ -163,9 +164,20 @@ def main(ctx: mlxp.Context):
                         artifact_type='image')
    
     # compute the c2st score between the true and estimated samples
-    print("C2ST computation running :")
-    acc = c2st_score_df(df_true_samples, df)
-    logger.log_metrics({"accuracy":acc.item()}, log_name="c2st")
+    # print("C2ST computation running :")
+    # acc = c2st_score_df(df_true_samples, df)
+    # logger.log_metrics({"accuracy":acc.item()}, log_name="c2st")
+    print("Variance computation :")
+    true_samples = torch.cat((torch.tensor(df_true_samples["alpha"]).unsqueeze(1),torch.tensor(df_true_samples["beta"]).unsqueeze(1)),dim=1)
+    true_var = torch.var(true_samples, dim=0)
+    logger.log_metrics({"true_variance_alpha":true_var[0].item()}, log_name="c2st")
+    logger.log_metrics({"true_variance_beta":true_var[1].item()}, log_name="c2st")
+    estimated_var = torch.var(estim_samples, dim=1)
+    logger.log_metrics({"estimated_variance_alpha":estimated_var[0].item()}, log_name="c2st")
+    logger.log_metrics({"estimated_variance_beta":estimated_var[1].item()}, log_name="c2st")
+
+
+
 
 if __name__ == "__main__":
     main()
