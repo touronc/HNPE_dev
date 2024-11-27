@@ -103,7 +103,25 @@ def get_posterior_samples(n_extra,true_theta,true_nextra,nb_samples=100000):
     #df.to_csv(f"true_samples_alpha_{true_theta[0]}_beta_{true_theta[1]}_nextra_{n_extra}.csv",index=False)
     return df, samples_mcmc
 
-def plot_true_posterior(n_extra, true_theta, samples_mcmc):
+def true_marginal_0_obs(x_0):
+    param = torch.linspace(x_0.item(),1,500)
+    return param, -1.0/(torch.log(x_0)*param)
+
+def true_marginal_alpha_nextra_obs(nextra_obs):
+    N = nextra_obs.size(1)-1 # only the nb of EXTRA obs
+    print(N)
+    mu = torch.max(nextra_obs)
+    x_0 = nextra_obs.squeeze()[0]
+    alpha = torch.linspace(x_0.item(),torch.min(torch.tensor([1.0,x_0/mu])).item(),500)
+    return alpha, N*alpha**(N-1)/((1/mu**N-1)*x_0**N)
+
+def true_marginal_beta_nextra_obs(nextra_obs):
+    N = len(nextra_obs)
+    mu = torch.max(nextra_obs)
+    beta = torch.linspace(mu.item(), 1, 500)
+    return beta, N/(beta**(N+1)*(1/mu**N-1))
+
+def plot_true_posterior(true_nextra, true_theta, samples_mcmc):
     # when we want to plot several joint posteriors at the same time
     
     # if len(samples_mcmc) >1: 
@@ -122,18 +140,26 @@ def plot_true_posterior(n_extra, true_theta, samples_mcmc):
     #         ax[i].set_ylabel(r"$\beta$")
     #         ax[i].set_title(f'n_extra = {n_extra}')
     #     plt.savefig("true_posterior_samples_multiple_nextra")
-    print(samples_mcmc.shape)
-    print(torch.tensor(samples_mcmc).size())
+    n_extra = true_nextra.size(1)-1
     xlim = [[0.0,1.0],[0.0,1.0]]
-    fig, ax = plot.pairplot(samples_mcmc, limits=xlim)
+    fig, ax = plot.pairplot(samples_mcmc, limits=xlim, diag="kde")
     condition_title = r"$x_0$"
     if n_extra>0:
         condition_title += rf"$, x_1, x_2,...,x_{n_extra}$"
     print(condition_title)
+    #x_0 = true_theta[0]*true_theta[1]
     ax[0][0].set_title(r"$p(\alpha|$"+condition_title+")")
     ax[0][0].set_xlabel(r"$\alpha$")
     ax[0][0].axvline(x=true_theta[0], linestyle='dotted', color="orange", lw=2)
-
+    if n_extra==0:
+        param, densities = true_marginal_0_obs(true_nextra)
+        ax[0][0].plot(param,densities.squeeze(), color="red")
+        ax[1][1].plot(param, densities.squeeze(), color="red")
+    else:
+        param, density_alpha = true_marginal_alpha_nextra_obs(true_nextra)
+        ax[0][0].plot(param, density_alpha, color="red")
+        param, density_beta = true_marginal_beta_nextra_obs(true_nextra)
+        ax[1][1].plot(param, density_beta, color="red")  
     ax[0][1].axvline(x=true_theta[1], ls='dotted', c='orange', lw=2.0)
     ax[0][1].axhline(y=true_theta[0], ls='dotted', c='orange', lw=2.0)
     ax[0][1].set_ylabel(r"$\alpha$")
@@ -144,11 +170,9 @@ def plot_true_posterior(n_extra, true_theta, samples_mcmc):
     ax[1][1].set_title(r"$p(\beta|$"+condition_title+")")
     ax[1][1].set_xlabel(r"$\beta$")
     ax[1][1].axvline(x=true_theta[1], linestyle='dotted', color="orange", lw=2)
-
     #fig.savefig(fname=f'true_posterior_samples_alpha_{true_theta[0]}_beta_{true_theta[1]}_nextra_{n_extra}.pdf', format='pdf')
     return fig, ax
-    #fig.show()
-
+    
 # if __name__ == "__main__":
 #     import argparse
 #     parser = argparse.ArgumentParser(

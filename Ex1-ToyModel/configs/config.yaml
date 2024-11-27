@@ -11,4 +11,5 @@ nextra: 0
 ntrials: 1
 nrounds: 1
 nsim: 10000
+num_sampling: 1
 dry: False

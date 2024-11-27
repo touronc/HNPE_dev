@@ -24,7 +24,6 @@ class AggregateInstances(torch.nn.Module):
 
     def forward(self, x):
         if self._aggregate:
-            print("aggregate")
             #print("size of batch x", x.size())
             xobs = x[:, 0][:, None]  # n_batch, n_embed
             #print("size xobs", xobs)
@@ -71,12 +70,12 @@ class ToyModelFlow_factorized_nflows(base.Distribution):
                  z_score_theta="independent", z_score_x="independent"):
 
         super().__init__()
-        print("factorized flow")
+
         # flow_1 estimates p(beta | x, x1, ..., xn) (parameter phi_1)
         # create a new net that embeds all n+1 observations and then aggregates
         # n of them via a sum operation (parameter phi_3)
         # computes the mean of the extra obs and stack it next to x
-        print("batchx", batch_x.size())
+
         embedding_net_1 = torch.nn.Sequential(
             embedding_net, AggregateInstances(aggregate=(batch_x.shape[2] > 1)) 
         )
@@ -86,7 +85,7 @@ class ToyModelFlow_factorized_nflows(base.Distribution):
         # the flow object or not; this can have an impact over the z-scoring
         batch_theta_1 = batch_theta[:, -1:] #size (nsim, 1)
         batch_context_1 = batch_x.mean(dim=1) #size (nsim, nextra+1)
-        print("context1", batch_context_1.size())
+
         flow_1 = build_nsf(batch_x=batch_theta_1,
                            batch_y=batch_context_1,
                            z_score_x=z_score_theta,
@@ -109,7 +108,7 @@ class ToyModelFlow_factorized_nflows(base.Distribution):
             [batch_x[:, :, :1].mean(dim=1), batch_theta[:, -1:]],
             dim=1
         ) #size (nsim, 2) # shape (n_batch, n_times+1)
-        print("batch context 2", batch_context_2.size())
+ 
         flow_2 = build_nsf(batch_x=batch_theta_2,
                            batch_y=batch_context_2,
                            z_score_x=z_score_theta,
@@ -161,7 +160,7 @@ class ToyModelFlow_factorized_nflows(base.Distribution):
         return -self.log_prob(input.unsqueeze(0), condition)
 
     def sample(self, num_samples, condition):
-        print("sample factorized flow")
+
         # print("num_samples", num_samples[0])
         # print(condition.size())
         condition_1 = condition.mean(dim=1)
@@ -179,7 +178,7 @@ class ToyModelFlow_factorized_nflows(base.Distribution):
                                                             context=condition_2)
         # sample de la forme (alpha,beta)
         samples = torch.cat([samples_flow_2, samples_flow_1], dim=1).unsqueeze(1) #on ajoute une dimension pour le batch shape (en 2e position)
-        print("factorized flow samples", samples.size())
+
         return samples 
 
     def save_state(self, filename):

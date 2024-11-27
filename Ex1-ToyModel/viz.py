@@ -7,6 +7,7 @@ import pandas as pd
 from sbi import utils as sbi_utils
 from sbi.analysis import plot
 from sbi.inference.posteriors.direct_posterior import DirectPosterior
+from get_true_samples_nextra_obs import true_marginal_0_obs, true_marginal_alpha_nextra_obs, true_marginal_beta_nextra_obs
 
 
 def get_posterior(simulator, prior, build_nn_posterior, meta_parameters,
@@ -85,27 +86,35 @@ def display_posterior(posterior, prior, metaparameters):
 
     return fig, axes
 
-def display_posterior_mlxp(posterior, prior, metaparameters, num_samples):
+def display_posterior_mlxp(posterior, prior, metaparameters, num_samples, true_nextra):
 
     alpha=metaparameters["theta"][0]
     beta=metaparameters["theta"][1]
-    #num_samples = 100_000
-    n_extras = metaparameters["n_extra"] #nb of extra conditional obs
+    n_extra = metaparameters["n_extra"] #nb of extra conditional obs
     n_sim = metaparameters["n_sr"] #nbr of simulations per round
 
     samples = posterior.sample((num_samples,))#.unsqueeze(1) #, sample_with=False)
     #df = pd.DataFrame(data=samples, columns=["beta","alpha"])
     df = pd.DataFrame(data=samples, columns=["alpha","beta"]) ### ATTENTION à l'ordre des paramètres dans la df
 
-    #df.to_csv(f"results/estimated_posterior_samples_{n_extras}_nextra_{n_sim}_sim.csv",index=False)
     xlim = [[prior.support.base_constraint.lower_bound[i],
              prior.support.base_constraint.upper_bound[i]]
             for i in range(2)]
-    fig, axes = plot.pairplot(samples, limits=xlim)
+    fig, axes = plot.pairplot(samples, limits=xlim, diag="kde")
     condition_title = r"$x_0$"
     if metaparameters["n_extra"]>0:
         condition_title += rf"$, x_1, x_2,...,x_{metaparameters["n_extra"]}$"
     print(condition_title)
+    if n_extra==0:
+        param, densities = true_marginal_0_obs(true_nextra)
+        axes[0][0].plot(param,densities.squeeze(), color="red")
+        axes[1][1].plot(param, densities.squeeze(), color="red")
+    else:
+        param, density_alpha = true_marginal_alpha_nextra_obs(true_nextra)
+        axes[0][0].plot(param, density_alpha, color="red")
+        param, density_beta = true_marginal_beta_nextra_obs(true_nextra)
+        axes[1][1].plot(param, density_beta, color="red") 
+    
     axes[0][0].set_title(r"$p(\alpha|$"+condition_title+")")
     axes[0][0].set_xlabel(r"$\alpha$")
     axes[0][0].axvline(x=alpha, linestyle='dotted', color="orange", lw=2)
@@ -128,7 +137,7 @@ def display_posterior_from_file(path):
     plot the marginals and joint posterior distribution from a csv file
     """
 
-    ### /!\ PLEASEchange the parameters below to suit your experment ###
+    ### /!\ PLEASE change the parameters below to suit your experiment ###
 
     alpha=0.5 #metaparameters["theta"][0]
     beta=0.5#metaparameters["theta"][1]
