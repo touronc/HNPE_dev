@@ -59,11 +59,11 @@ def main(ctx: mlxp.Context):
         maxepochs = 0
         saverounds = False
     else:
-        nrd = cfg.nrounds #1 #NBR ROUND
-        nsr = cfg.nsim #NBR SIMU PER ROUND
+        nrd = cfg.nrounds #1 # nb of rounds
+        nsr = cfg.nsim # nb of simu per round
         maxepochs = 500 #None
         saverounds = True
-        num_samples = 5000
+        num_samples = 5000 # nb of samples
 
     # setup the parameters for the example
     meta_parameters = {}
@@ -114,7 +114,7 @@ def main(ctx: mlxp.Context):
 
     # choose the ground truth observation to consider in the inference
     ground_truth = get_ground_truth(meta_parameters, p_alpha=prior)
-
+    
     # if meta_parameters["n_extra"]>1:
     #     print(ground_truth["observation"].squeeze())
     #     df = pd.DataFrame(ground_truth["observation"].squeeze(), columns=["xobs"])
@@ -151,9 +151,10 @@ def main(ctx: mlxp.Context):
 
     # get the ground truth observations (x_0,...x_N)
     true_nextra = ground_truth["observation"].squeeze(0)
-
+    
     # sample from the learnt posterior and plot the densities
     estim_samples, df, fig, ax = display_posterior_mlxp(posterior, prior, meta_parameters, num_samples, true_nextra)
+    
     logger.log_artifacts(fig, artifact_name=f"posterior_plot_naive_{cfg.naive}_{nrd}_rounds_{nsr}_simperround_{cfg.nextra}_nextra.png",
                         artifact_type='image')
     logger.register_artifact_type("pickle", save_pickle, load_pickle)
@@ -163,12 +164,12 @@ def main(ctx: mlxp.Context):
     df_true_samples, true_samples = get_posterior_samples(meta_parameters["n_extra"],meta_parameters["theta"],true_nextra,num_samples)
     logger.log_artifacts(df_true_samples, f"true_posterior_samples_{cfg.noise}_scale_{cfg.nextra}_nextra.pkl", "pickle")
     
-    # plot the true posterior
+    # # plot the true posterior
     fig1, ax1 = plot_true_posterior(true_nextra,meta_parameters["theta"],true_samples)
     logger.log_artifacts(fig1, artifact_name=f"true_plot_scale_{cfg.noise}_{cfg.nextra}_nextra.png",
                         artifact_type='image')
    
-    # compute the c2st score between the true and estimated samples
+    # # compute the c2st score between the true and estimated samples
     print("C2ST computation running :")
     acc = 1/(cfg.num_sampling)*c2st_score_df(df_true_samples, df)
     # compute the variance of the samples
@@ -182,11 +183,11 @@ def main(ctx: mlxp.Context):
         # create new observations x_0, ..., x_N
         ground_truth = get_ground_truth(meta_parameters, p_alpha=prior)
         # evaluate the learnt posterior at this observation
+        #ground_truth = {"observation":torch.tensor([[0.8,0.01,0.23]])}
         posterior = posterior.set_default_x(ground_truth["observation"])
-        # sample fro mthe learnt posterior and the true one
+        # sample from the learnt posterior and the true one
         samples = posterior.sample((num_samples,))
         _, true_samples = get_posterior_samples(meta_parameters["n_extra"],meta_parameters["theta"],ground_truth["observation"].squeeze(0),num_samples)
-        
         # compute the mean c2st score over the different sampling sets
         acc += 1/(cfg.num_sampling)*c2st(samples, torch.tensor(true_samples))
         # compute the mean variance over the different samplings

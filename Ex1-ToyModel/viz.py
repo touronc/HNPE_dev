@@ -19,7 +19,6 @@ def get_posterior(simulator, prior, build_nn_posterior, meta_parameters,
     # load ground truth
     ground_truth = torch.load(folderpath / "ground_truth.pkl",
                               map_location="cpu")
-
     # Construct posterior
     batch_theta = prior.sample((2,))
     batch_x = simulator(batch_theta)
@@ -92,11 +91,11 @@ def display_posterior_mlxp(posterior, prior, metaparameters, num_samples, true_n
     beta=metaparameters["theta"][1]
     n_extra = metaparameters["n_extra"] #nb of extra conditional obs
     n_sim = metaparameters["n_sr"] #nbr of simulations per round
-
     samples = posterior.sample((num_samples,))#.unsqueeze(1) #, sample_with=False)
     #df = pd.DataFrame(data=samples, columns=["beta","alpha"])
+        
     df = pd.DataFrame(data=samples, columns=["alpha","beta"]) ### ATTENTION à l'ordre des paramètres dans la df
-
+    
     xlim = [[prior.support.base_constraint.lower_bound[i],
              prior.support.base_constraint.upper_bound[i]]
             for i in range(2)]

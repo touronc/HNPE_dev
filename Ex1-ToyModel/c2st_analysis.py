@@ -8,13 +8,13 @@ def c2st_score(df_true_theta_file, df_estimated_theta_file):
     compute the C2ST score between true posterior samples and estimated ones
     the closer to 0.5 the better
     """
-
-    true_alpha=torch.tensor(pd.read_csv(f"results/{df_true_theta_file}")["alpha"]).unsqueeze(1)
-    true_beta=torch.tensor(pd.read_csv(f"results/{df_true_theta_file}")["beta"]).unsqueeze(1)
+    stop = 5000
+    true_alpha=torch.tensor(pd.read_csv(f"{df_true_theta_file}")["alpha"]).unsqueeze(1)[:stop]
+    true_beta=torch.tensor(pd.read_csv(f"{df_true_theta_file}")["beta"]).unsqueeze(1)[:stop]
     true_theta=torch.cat((true_alpha,true_beta), dim=1)
     #print(true_theta)
-    estimated_alpha=torch.tensor(pd.read_csv(f"results/{df_estimated_theta_file}")["alpha"]).unsqueeze(1)
-    estimated_beta=torch.tensor(pd.read_csv(f"results/{df_estimated_theta_file}")["beta"]).unsqueeze(1)
+    estimated_alpha=torch.tensor(pd.read_csv(f"{df_estimated_theta_file}")["alpha"]).unsqueeze(1)[:stop]
+    estimated_beta=torch.tensor(pd.read_csv(f"{df_estimated_theta_file}")["beta"]).unsqueeze(1)[:stop]
     estimated_theta=torch.cat((estimated_alpha,estimated_beta), dim=1)
     #print(estimated_theta)
     accuracy = c2st(true_theta, estimated_theta)
@@ -26,7 +26,6 @@ def c2st_score_df(df_true_theta, df_estimated_theta):
     compute the C2ST score between true posterior samples and estimated ones
     the closer to 0.5 the better
     """
-
     true_alpha=torch.tensor(df_true_theta["alpha"]).unsqueeze(1)
     true_beta=torch.tensor(df_true_theta["beta"]).unsqueeze(1)
     true_theta=torch.cat((true_alpha,true_beta), dim=1)
@@ -46,7 +45,7 @@ def c2st_score_df(df_true_theta, df_estimated_theta):
 #print("____ Computation running ____")
 
 
-#c2st_score("true_samples_alpha_0.5_beta_0.5_nextra_100.csv","estimated_posterior_samples_naive_False_100_nextra_10000_sim.csv")
+#c2st_score("estimated_posterior_samples_naive_False_5_nextra_10000_sim.csv","true_posterior_samples_0.csv")
 #c2st_score("true_posterior_samples_0.001.csv","estimated_posterior_samples_naive_True_0_nextra_10000_sim_mlxp.csv")
 
 
