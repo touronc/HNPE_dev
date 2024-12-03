@@ -50,7 +50,7 @@ plt.text(1, 0.011, 'noise', horizontalalignment = 'center', color='orange', font
 plt.legend()
 plt.title(r"Mean variance of $\beta$ parameters")
 plt.xlabel("nb of extra obs")
-plt.savefig("evolution_mean_metrics", format="pdf")
+plt.savefig("evolution_mean_metrics.pdf", format="pdf")
 plt.show()
 
 
