@@ -109,14 +109,14 @@ def true_marginal_0_obs(x_0):
 
 def true_marginal_alpha_nextra_obs(nextra_obs):
     N = nextra_obs.size(1)-1 # only the nb of EXTRA obs
-    print(N)
     mu = torch.max(nextra_obs)
+    nu = torch.max(nextra_obs[:,1:])
     x_0 = nextra_obs.squeeze()[0]
-    alpha = torch.linspace(x_0.item(),torch.min(torch.tensor([1.0,x_0/mu])).item(),500)
+    alpha = torch.linspace(x_0.item(),torch.min(torch.tensor([1.0,x_0/nu])).item(),500)
     return alpha, N*alpha**(N-1)/((1/mu**N-1)*x_0**N)
 
 def true_marginal_beta_nextra_obs(nextra_obs):
-    N = len(nextra_obs)
+    N = nextra_obs.size(1)-1
     mu = torch.max(nextra_obs)
     beta = torch.linspace(mu.item(), 1, 500)
     return beta, N/(beta**(N+1)*(1/mu**N-1))

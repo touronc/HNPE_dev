@@ -86,19 +86,24 @@ def display_posterior(posterior, prior, metaparameters):
     return fig, axes
 
 def display_posterior_mlxp(posterior, prior, metaparameters, num_samples, true_nextra):
-
+    #print("in sampling true nextra",true_nextra)
     alpha=metaparameters["theta"][0]
     beta=metaparameters["theta"][1]
     n_extra = metaparameters["n_extra"] #nb of extra conditional obs
     n_sim = metaparameters["n_sr"] #nbr of simulations per round
     samples = posterior.sample((num_samples,))#.unsqueeze(1) #, sample_with=False)
-    #df = pd.DataFrame(data=samples, columns=["beta","alpha"])
-        
+    #df = pd.DataFrame(data=samples, columns=["beta","alpha"]) 
     df = pd.DataFrame(data=samples, columns=["alpha","beta"]) ### ATTENTION à l'ordre des paramètres dans la df
     
     xlim = [[prior.support.base_constraint.lower_bound[i],
              prior.support.base_constraint.upper_bound[i]]
             for i in range(2)]
+    # import seaborn as sns
+    # fig1 = plt.figure()
+    # sns.kdeplot(samples[:,[0]])
+    # param, density_alpha = true_marginal_alpha_nextra_obs(true_nextra)
+    # plt.plot(param,density_alpha)
+    # fig1.savefig("test_alpha")
     fig, axes = plot.pairplot(samples, limits=xlim, diag="kde")
     condition_title = r"$x_0$"
     if metaparameters["n_extra"]>0:

@@ -47,7 +47,7 @@ def load_pickle(path):
 
 @mlxp.launch(config_path='./configs/')
 def main(ctx: mlxp.Context):
-    #torch.manual_seed(42)
+    torch.manual_seed(42)
 
     cfg = ctx.config
     logger = ctx.logger
@@ -133,7 +133,7 @@ def main(ctx: mlxp.Context):
     #if not cfg.viz:
     # run inference procedure over the example
     # train the model
-    run_inference(simulator=simulator,
+    pos = run_inference(simulator=simulator,
                             prior=prior,
                             build_nn_posterior=build_nn_posterior,
                             ground_truth=ground_truth,
@@ -142,16 +142,18 @@ def main(ctx: mlxp.Context):
                             save_rounds=saverounds,
                             device='cpu',
                             max_num_epochs=maxepochs)
-    
-    #print("avant get posterior")
-    posterior = get_posterior(
-        simulator, prior, build_nn_posterior,
-        meta_parameters, round_=cfg.round
-    )
+    # print("avant get posterior")
+    # posterior = get_posterior(
+    #     simulator, prior, build_nn_posterior,
+    #     meta_parameters, round_=cfg.round
+    # )
+    posterior = pos[-1]
 
     # get the ground truth observations (x_0,...x_N)
     true_nextra = ground_truth["observation"].squeeze(0)
-    
+    print("true obs", ground_truth)
+    posterior.set_default_x(true_nextra)
+
     # sample from the learnt posterior and plot the densities
     estim_samples, df, fig, ax = display_posterior_mlxp(posterior, prior, meta_parameters, num_samples, true_nextra)
     
@@ -184,9 +186,14 @@ def main(ctx: mlxp.Context):
         ground_truth = get_ground_truth(meta_parameters, p_alpha=prior)
         # evaluate the learnt posterior at this observation
         #ground_truth = {"observation":torch.tensor([[0.8,0.01,0.23]])}
-        posterior = posterior.set_default_x(ground_truth["observation"])
+        posterior = posterior.set_default_x(ground_truth["observation"].squeeze(0))
         # sample from the learnt posterior and the true one
-        samples = posterior.sample((num_samples,))
+        if i%20==0:
+            samples, df, fig, ax = display_posterior_mlxp(posterior, prior, meta_parameters, num_samples, true_nextra)
+            logger.log_artifacts(fig, artifact_name=f"posterior_plot_{i}_naive_{cfg.naive}_{nrd}_rounds_{nsr}_simperround_{cfg.nextra}_nextra.png",
+                        artifact_type='image')
+        else:
+            samples = posterior.sample((num_samples,))
         _, true_samples = get_posterior_samples(meta_parameters["n_extra"],meta_parameters["theta"],ground_truth["observation"].squeeze(0),num_samples)
         # compute the mean c2st score over the different sampling sets
         acc += 1/(cfg.num_sampling)*c2st(samples, torch.tensor(true_samples))

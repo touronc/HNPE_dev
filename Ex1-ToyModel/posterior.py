@@ -83,13 +83,16 @@ class ToyModelFlow_factorized_nflows(base.Distribution):
         # the flow object or not; this can have an impact over the z-scoring
         batch_theta_1 = batch_theta[:, -1:] #size (nsim, 1)
         batch_context_1 = batch_x.mean(dim=1) #size (nsim, nextra+1) mean over ntrials
-
         flow_1 = build_nsf(batch_x=batch_theta_1,
                            batch_y=batch_context_1,
                            z_score_x=z_score_theta,
                            z_score_y=z_score_x,
                            embedding_net=embedding_net_1,
-                           num_transforms=5)
+                           num_transforms=5,
+                           #num_blocks=4,
+                           #num_bins=20,
+                           #hidden_layers_spline_context=5,
+                           tail_bound=10.0)
 
         self._flow_1 = flow_1 #TYPE: Nflowsflow
 
@@ -112,7 +115,11 @@ class ToyModelFlow_factorized_nflows(base.Distribution):
                            z_score_x=z_score_theta,
                            z_score_y=z_score_x,
                            embedding_net=embedding_net_2,
-                           num_transforms=5)
+                           num_transforms=5,
+                           #num_blocks=4,
+                           #num_bins=20,
+                           #hidden_layers_spline_context=5,
+                           tail_bound=10.0)
         # flow_2 = build_maf_rqs(batch_x=batch_theta_2,
         #                         batch_y=batch_context_2,
         #                         z_score_x=z_score_theta,
@@ -133,7 +140,7 @@ class ToyModelFlow_factorized_nflows(base.Distribution):
         #print("input shape",self.input_shape)
         self.condition_shape = batch_x[0,:,:].size() #torch.zeros((1,1)).size()
         # A DECOMMENTER POUR LANCER UNE VERSION SEQUENTIELLE
-        #self.net = self._flow_2.net
+        self.net = self._flow_2.net
 
     def log_prob(self, inputs, condition):
         
@@ -144,7 +151,7 @@ class ToyModelFlow_factorized_nflows(base.Distribution):
         # theta_1 = inputs[:,-1:]  # gain is the last parameter
         
         logp_1 = self._flow_1.log_prob(theta_1, condition_1)
-        
+                    
         # logprob of the flow that models p(C, mu, sigma | x, gain)
         #ATTENTION changement de taille
         beta = inputs[:, :, -1:].squeeze(0)
@@ -155,17 +162,16 @@ class ToyModelFlow_factorized_nflows(base.Distribution):
         theta_2 = inputs[:,:, :-1] #alpha is the first parameter
         # theta_2 = inputs[:, :-1]
         logp_2 = self._flow_2.log_prob(theta_2, condition_2)
-
+        #print("log2", logp_2.size())
         return logp_1 + logp_2
     
     def loss(self, input, condition):
-
+        
         return -self.log_prob(input.unsqueeze(0), condition)
 
     def sample(self, num_samples, condition):
 
         condition_1 = condition.mean(dim=1)
-
         # shape (n_samples, 1)
         samples_flow_1 = self._flow_1.sample(num_samples, condition_1).squeeze(2)#[0] #on garde le premier beta seulement ??
 
@@ -177,6 +183,7 @@ class ToyModelFlow_factorized_nflows(base.Distribution):
 
         # condition batch passes through a standardizing net then embedding net
         condition_2 = self._flow_2.net._embedding_net(condition_2) #on va chercher le flow du Nflowflows puis l'embedding net
+        # condition_2 = self._flow_2.embedding_net(condition_2) #on va chercher le flow du Nflowflows puis l'embedding net
         noise = self._flow_2.net._distribution.sample(num_samples[0])
         samples_flow_2, _ = self._flow_2.net._transform.inverse(noise,
                                                           context=condition_2)
