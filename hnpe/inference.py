@@ -78,8 +78,9 @@ def run_inference(simulator, prior, build_nn_posterior, ground_truth,
         # train the neural posterior with the loaded data
         nn_posterior = inference.append_simulations(theta, x, proposal=proposal).train(
             num_atoms=10,
+            #learning_rate=1e-4,
             training_batch_size=training_batch_size,
-            use_combined_loss=True,
+            #use_combined_loss=True,
             discard_prior_samples=True,
             max_num_epochs=max_num_epochs,
             stop_after_epochs=stop_after_epochs,
